@@ -1,5 +1,5 @@
 {
-  "name": "blog-generator",
+  "name": "chatbot",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "openai": "^6.5.0"
+    "openai": "^6.5.0",
+    "dotenv": "^16.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
