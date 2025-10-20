@@ -16,25 +16,28 @@ class BlogGenerator {
     });
   }
 
+  async debug() {
+    const models = await this.openai.models.list();
+    console.log(models);
+  }
+
   async generateBlogPost(topic: string): Promise<BlogPost> {
+    const prompt = `
+    You are a copy writer with years of experience in writing blog posts.
+    Your taski is to write a blog post about the given topic. Make sure to write in a way that works for Medium.
+    Each blog should be separated into segments that have  titles and subtitles. Each paragraph should be three sentences long.
+    Write a blog post about: ${topic}
+    Additional pointers: None
+    `;
     try {
-      const completion = await this.openai.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a helpful assistant that generates blog posts. Create engaging, informative content.",
-          },
-          {
-            role: "user",
-            content: `Write a blog post about: ${topic}`,
-          },
-        ],
-        model: "gpt-3.5-turbo",
+      const completion = await this.openai.completions.create({
+        prompt,
+        model: "gpt-3.5-turbo-instruct",
+        max_tokens: 700,
+        temperature: 1,
       });
 
-      const content =
-        completion.choices[0]?.message?.content || "No content generated";
+      const content = completion.choices[0]?.text || "No content generated";
 
       return {
         title: `Blog Post: ${topic}`,
@@ -70,6 +73,8 @@ async function main() {
   }
 
   const generator = new BlogGenerator(apiKey);
+
+  //   await generator.debug();
 
   try {
     const blogPost = await generator.generateBlogPost(
