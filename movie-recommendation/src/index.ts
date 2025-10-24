@@ -1,12 +1,16 @@
 import OpenAI from "openai";
 import * as dotenv from "dotenv";
 import * as math from "mathjs";
+import * as fs from "fs";
+import * as path from "path";
+import csv from "csv-parser";
 
 // Load environment variables
 dotenv.config();
 
 class MovieRecommendation {
   private openai: OpenAI;
+  private moviesData: any[] = [];
 
   constructor(apiKey?: string) {
     const key = apiKey || process.env.OPENAI_API_KEY;
@@ -21,6 +25,30 @@ class MovieRecommendation {
     });
   }
 
+  async initializeDataset(): Promise<void> {
+    const csvPath = path.join(__dirname, "..", "movies_metadata.csv");
+
+    try {
+      const movies: any[] = [];
+
+      const stream = fs.createReadStream(csvPath).pipe(csv());
+
+      for await (const data of stream) {
+        movies.push({
+          original_title: data.original_title,
+          overview: data.overview,
+        });
+      }
+
+      this.moviesData = movies
+        .slice(0, 100)
+        .filter((movie) => !!movie.overview && !!movie.overview.trim()); // Limit for performance
+    } catch (error) {
+      console.error("Error initializing dataset:", error);
+      this.moviesData = [];
+    }
+  }
+
   async calculateInputEmbedding(input: string) {
     const embeddings = await this.openai.embeddings.create({
       model: "text-embedding-3-small",
@@ -30,14 +58,9 @@ class MovieRecommendation {
   }
 
   async searchMatchingMovies(inputEmbedding: number[]) {
-    const toyDataset = [
-      "The Terminator is a movie about AI going rogue and trying to kill humans",
-      "Harry Potter is a movie about a boy who is a wizard",
-      "In the movie Matrix, the protagonist is a hacker who is trying to save the world from the machine",
-    ];
     const embeddings = await this.openai.embeddings.create({
       model: "text-embedding-3-small",
-      input: toyDataset,
+      input: this.moviesData.map((movie) => movie.overview),
     });
     const cleanEmbeddings = embeddings.data.map(
       (embedding) => embedding.embedding
@@ -46,11 +69,21 @@ class MovieRecommendation {
       this.calculateCosineSimilarity(inputEmbedding, embedding)
     );
 
-    // get the index of the highest similarity score
-    const highestSimilarityIndex = similarityScores.indexOf(
-      Math.max(...similarityScores)
-    );
-    return toyDataset[highestSimilarityIndex];
+    // Create array of objects with movie data and similarity scores
+    const moviesWithScores = this.moviesData.map((movie, index) => ({
+      ...movie,
+      similarityScore: similarityScores[index],
+    }));
+
+    // Sort by similarity score in descending order and get top 5
+    const topMovies = moviesWithScores
+      .sort((a, b) => b.similarityScore - a.similarityScore)
+      .slice(0, 5);
+
+    return topMovies.map((movie) => ({
+      title: movie.original_title,
+      similarityScore: movie.similarityScore,
+    }));
   }
 
   calculateCosineSimilarity(inputVector: number[], datasetVector: number[]) {
@@ -75,12 +108,22 @@ class MovieRecommendation {
 if (require.main === module) {
   const movieRecommendation = new MovieRecommendation();
   (async () => {
+    // Initialize the dataset
+    await movieRecommendation.initializeDataset();
+
     const inputEmbedding = await movieRecommendation.calculateInputEmbedding(
-      "I want a movie about people murdered"
+      "I want some jungle adventure movie"
     );
     const matchingMovies = await movieRecommendation.searchMatchingMovies(
       inputEmbedding
     );
-    console.log(matchingMovies);
+    console.log("Top 5 matching movies:");
+    matchingMovies.forEach((movie, index) => {
+      console.log(
+        `${index + 1}. ${
+          movie.title
+        } (similarity: ${movie.similarityScore.toFixed(4)})`
+      );
+    });
   })();
 }
