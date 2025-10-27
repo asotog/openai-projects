@@ -1,0 +1,28 @@
+{
+  "name": "movie-recommendation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "dotenv -e .env.local -- ts-node src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@pinecone-database/pinecone": "^6.1.2",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^16.0.0",
+    "mathjs": "^15.0.0",
+    "openai": "^6.5.0",
+    "pdf-parse": "^2.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "dotenv-cli": "^10.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}
