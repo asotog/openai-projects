@@ -1,5 +1,5 @@
 {
-  "name": "pdf-rag",
+  "name": "image-generator",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -12,12 +12,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@pinecone-database/pinecone": "^6.1.2",
-    "csv-parser": "^3.2.0",
-    "dotenv": "^16.0.0",
-    "mathjs": "^15.0.0",
     "openai": "^6.5.0",
-    "pdf-parse": "^2.4.5"
+    "sharp": "^0.34.4"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
